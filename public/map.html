@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Locator Map</title>
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    .favorite-btn {
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Event Locations</h1>
+  <div id="map"></div>
+  <p>Login with token: <input type="text" id="token" placeholder="Bearer <token>"></p>
+
+  <script>
+    let userToken = '';
+
+    async function initMap() {
+      const response = await fetch('http://localhost:3000/events');
+      const events = await response.json();
+
+      let mapOptions = {
+        zoom: 10,
+        center: { lat: events[0]?.latitude || 0, lng: events[0]?.longitude || 0 }
+      };
+      if (!events.length) {
+        mapOptions.center = { lat: 0, lng: 0 };
+        mapOptions.zoom = 2;
+      }
+
+      const map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+      events.forEach(event => {
+        const marker = new google.maps.Marker({
+          position: { lat: event.latitude, lng: event.longitude },
+          map: map,
+          title: event.titles.en
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <h3>${event.titles.en}</h3>
+            <p>${event.descriptions.en}</p>
+            <p>Date: ${event.event_date}</p>
+            <button class="favorite-btn" onclick="toggleFavorite(${event.id})">
+              Favorite
+            </button>
+          `
+        });
+
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
+        });
+      });
+    }
+
+    async function toggleFavorite(eventId) {
+      userToken = document.getElementById('token').value;
+      if (!userToken) {
+        alert('Please enter your token!');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:3000/events/${eventId}/favorite`, {
+          method: 'POST',
+          headers: {
+            'Authorization': userToken,
+            'Content-Type': 'application/json'
+          }
+        });
+        let result;
+        const text = await response.text(); // Get raw text first
+        try {
+          result = JSON.parse(text); // Attempt to parse as JSON
+        } catch (e) {
+          result = { error: text }; // Fallback to text if not JSON
+        }
+
+        if (response.ok) {
+          alert('Added to favorites!');
+        } else {
+          alert(result.error || 'Failed to favorite');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDd1MRQo6a3LmCWezMc5FHfUCA-M7uNQEU&callback=initMap" async defer></script>
+</body>
+</html>
