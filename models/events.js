@@ -156,6 +156,28 @@ const Event = {
     `;
     const result = await pool.query(query, [user_id]);
     return result.rows;
+  },
+
+  async findAllWithLocations() {
+    const query = `
+      SELECT e.*,
+             ST_X(e.location::geometry) AS longitude,
+             ST_Y(e.location::geometry) AS latitude
+      FROM events e
+      ORDER BY e.event_date DESC
+    `;
+    
+    try {
+      const result = await pool.query(query);
+      return result.rows.map(event => ({
+        ...event,
+        longitude: parseFloat(event.longitude),
+        latitude: parseFloat(event.latitude)
+      }));
+    } catch (err) {
+      console.error('Find all events error:', err.message);
+      throw err;
+    }
   }
 };
 
