@@ -53,37 +53,13 @@ const Event = {
       event_date: event.event_date
     };
     console.log('Broadcasting event:', broadcastEvent);
-    broadcast({ type: 'new_event', data: broadcastEvent });
+    try {
+      broadcast({ type: 'new_event', data: broadcastEvent });
+    } catch (err) {
+      console.error('Broadcast error:', err.message);
+    }
 
     return event;
-  },
-
-  async findAllWithLocations() {
-    const query = `
-      SELECT id, titles, descriptions, event_date, categories, created_by,
-             ST_X(location::geometry) AS longitude,
-             ST_Y(location::geometry) AS latitude
-      FROM events
-    `;
-    const result = await pool.query(query);
-    return result.rows;
-  },
-
-  async findAll() {
-    const query = 'SELECT * FROM events';
-    const result = await pool.query(query);
-    return result.rows;
-  },
-
-  async findAllWithLocations() {
-    const query = `
-      SELECT id, titles, descriptions, event_date, categories, created_by,
-             ST_X(location::geometry) AS longitude,
-             ST_Y(location::geometry) AS latitude
-      FROM events
-    `;
-    const result = await pool.query(query);
-    return result.rows;
   },
 
   async notifyUsers(event) {
