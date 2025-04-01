@@ -48,12 +48,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
-setWebSocketServer(server); // Initialize WebSocket
-
 app.use('/auth', authRoutes);
 app.use('/events', eventRoutes);
 app.use('/notifications', notificationRoutes);
@@ -63,5 +57,13 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.send('Event Locator API is running!');
 });
+
+// Only start server if run directly (not imported)
+if (require.main === module) {
+  const server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+  setWebSocketServer(server);
+}
 
 module.exports = { app };
