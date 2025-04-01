@@ -7,11 +7,11 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const notificationRoutes = require('./routes/notifications');
+const { setWebSocketServer } = require('./websocket');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// JWT Strategy setup
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: 'your-jwt-secret'
@@ -33,10 +33,6 @@ passport.use('jwt', new JwtStrategy(opts, async (jwt_payload, done) => {
   }
 }));
 
-// Log registered strategies
-console.log('Registered strategies at startup:', Object.keys(passport._strategies));
-
-// Middleware
 app.use(express.json());
 app.use(session({
   secret: 'your-secret-key',
@@ -46,29 +42,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Log requests and token extraction
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.url}`);
   console.log('Headers:', req.headers);
-  console.log('Authenticating with Passport for strategy: jwt');
-  const token = opts.jwtFromRequest(req); // Extract token manually
-  console.log('Extracted token:', token || 'No token found');
   next();
 });
 
-// Test route
-app.get('/test-auth', passport.authenticate('jwt', { session: false, failWithError: true }), (req, res) => {
-  res.json({ message: 'Authenticated', user: req.user });
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
-// Handle authentication errors
-app.use((err, req, res, next) => {
-  if (err) {
-    console.log('Authentication error:', err.message);
-    return res.status(401).json({ error: 'Unauthorized', details: err.message });
-  }
-  next();
-});
+setWebSocketServer(server); // Initialize WebSocket
 
 app.use('/auth', authRoutes);
 app.use('/events', eventRoutes);
@@ -80,6 +64,4 @@ app.get('/', (req, res) => {
   res.send('Event Locator API is running!');
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+module.exports = { app };

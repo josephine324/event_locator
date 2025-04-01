@@ -19,6 +19,25 @@
 
   <script>
     let userToken = '';
+    let ws = new WebSocket('ws://localhost:3000');
+
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'new_event') {
+        const { titles, latitude, longitude } = message.data;
+        alert(`New event nearby: ${titles.en} at (${latitude}, ${longitude})`);
+        // Optionally add marker to map
+        addMarker(message.data);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from WebSocket server');
+    };
 
     async function initMap() {
       const response = await fetch('http://localhost:3000/events');
@@ -36,26 +55,32 @@
       const map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
       events.forEach(event => {
-        const marker = new google.maps.Marker({
-          position: { lat: event.latitude, lng: event.longitude },
-          map: map,
-          title: event.titles.en
-        });
+        addMarker(event, map);
+      });
 
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
-            <h3>${event.titles.en}</h3>
-            <p>${event.descriptions.en}</p>
-            <p>Date: ${event.event_date}</p>
-            <button class="favorite-btn" onclick="toggleFavorite(${event.id})">
-              Favorite
-            </button>
-          `
-        });
+      window.currentMap = map; // Store map for dynamic updates
+    }
 
-        marker.addListener('click', () => {
-          infoWindow.open(map, marker);
-        });
+    function addMarker(event, map = window.currentMap) {
+      const marker = new google.maps.Marker({
+        position: { lat: event.latitude, lng: event.longitude },
+        map: map,
+        title: event.titles.en
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <h3>${event.titles.en}</h3>
+          <p>${event.descriptions.en}</p>
+          <p>Date: ${event.event_date}</p>
+          <button class="favorite-btn" onclick="toggleFavorite(${event.id})">
+            Favorite
+          </button>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(map, marker);
       });
     }
 
@@ -74,13 +99,8 @@
             'Content-Type': 'application/json'
           }
         });
-        let result;
-        const text = await response.text(); // Get raw text first
-        try {
-          result = JSON.parse(text); // Attempt to parse as JSON
-        } catch (e) {
-          result = { error: text }; // Fallback to text if not JSON
-        }
+        const text = await response.text();
+        const result = JSON.parse(text) || { error: text };
 
         if (response.ok) {
           alert('Added to favorites!');

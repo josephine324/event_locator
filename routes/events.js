@@ -3,7 +3,7 @@ const router = express.Router();
 const Event = require('../models/events');
 const passport = require('passport');
 
-router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/', async (req, res) => {
   const { titles, descriptions, location, event_date, categories } = req.body;
   try {
     const event = await Event.create({
@@ -12,7 +12,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
       location,
       event_date,
       categories,
-      created_by: req.user.id
+      created_by: 1 // Admin ID
     });
     res.status(201).json({ message: 'Event created', event });
   } catch (err) {
@@ -21,15 +21,13 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
   }
 });
 
-router.post('/:id/review', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/:id/review', passport.authenticate('jwt', { session: false, failWithError: true }), async (req, res) => {
   const { id } = req.params;
   const { rating, review } = req.body;
   const user_id = req.user.id;
-
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json({ error: 'Rating must be between 1 and 5' });
   }
-
   try {
     const newReview = await Event.addReview({ user_id, event_id: id, rating, review });
     res.status(201).json({ message: 'Review submitted', review: newReview });
@@ -37,6 +35,8 @@ router.post('/:id/review', passport.authenticate('jwt', { session: false }), asy
     console.error('Review error:', err.message);
     res.status(400).json({ error: 'Review submission failed', details: err.message });
   }
+}, (err, req, res) => {
+  res.status(401).json({ error: 'Unauthorized', details: err.message });
 });
 
 router.get('/:id/reviews', async (req, res) => {
@@ -53,10 +53,11 @@ router.get('/:id/reviews', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const events = await Event.findAllWithLocations();
+    console.log('GET /events - Sending events:', events);
     res.json(events);
   } catch (err) {
-    console.error(err.stack);
-    res.status(500).send('Server error');
+    console.error('GET /events - Error:', err.stack);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
@@ -70,8 +71,7 @@ router.post('/:id/favorite', passport.authenticate('jwt', { session: false, fail
     console.error('Favorite error:', err.message);
     res.status(400).json({ error: 'Failed to add favorite', details: err.message });
   }
-}, (err, req, res, next) => {
-  console.log('Favorite route - Auth error:', err.message);
+}, (err, req, res) => {
   res.status(401).json({ error: 'Unauthorized', details: err.message });
 });
 

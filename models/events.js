@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const transporter = require('../config/email');
+const { broadcast } = require('../websocket');
 
 const Event = {
   async create({ titles, descriptions, location, event_date, categories, created_by }) {
@@ -13,14 +14,25 @@ const Event = {
       throw new Error('Invalid location');
     }
 
+    const fullTitles = {
+      en: titles.en || '',
+      es: titles.es || '',
+      fr: titles.fr || ''
+    };
+    const fullDescriptions = {
+      en: descriptions.en || '',
+      es: descriptions.es || '',
+      fr: descriptions.fr || ''
+    };
+
     const query = `
       INSERT INTO events (titles, descriptions, location, event_date, categories, created_by)
       VALUES ($1, $2, ST_GeogFromText(ST_AsText(ST_Point($3, $4))), $5, $6, $7)
       RETURNING *
     `;
     const values = [
-      JSON.stringify(titles),
-      JSON.stringify(descriptions),
+      JSON.stringify(fullTitles),
+      JSON.stringify(fullDescriptions),
       location.longitude,
       location.latitude,
       event_date,
@@ -29,8 +41,32 @@ const Event = {
     ];
     const result = await pool.query(query, values);
     const event = result.rows[0];
+
     await this.notifyUsers(event);
+
+    const broadcastEvent = {
+      id: event.id,
+      titles: event.titles,
+      descriptions: event.descriptions,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      event_date: event.event_date
+    };
+    console.log('Broadcasting event:', broadcastEvent);
+    broadcast({ type: 'new_event', data: broadcastEvent });
+
     return event;
+  },
+
+  async findAllWithLocations() {
+    const query = `
+      SELECT id, titles, descriptions, event_date, categories, created_by,
+             ST_X(location::geometry) AS longitude,
+             ST_Y(location::geometry) AS latitude
+      FROM events
+    `;
+    const result = await pool.query(query);
+    return result.rows;
   },
 
   async findAll() {
