@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 
 const User = {
-  // Public registration (no is_admin)
+  
   async create({ username, password, location, preferences, language }) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const query = `
@@ -21,7 +21,7 @@ const User = {
     return result.rows[0];
   },
 
-  // Admin creation (includes is_admin = true)
+ 
   async createAdmin({ username, password, location, preferences, language }) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const query = `

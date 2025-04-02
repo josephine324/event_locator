@@ -12,7 +12,7 @@ router.post('/', async (req, res) => {
       location,
       event_date,
       categories,
-      created_by: 1 // Admin ID
+      created_by: 1 
     });
     res.status(201).json({ message: 'Event created', event });
   } catch (err) {

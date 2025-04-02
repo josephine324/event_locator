@@ -16,7 +16,7 @@ jest.mock('../websocket', () => ({
 
 describe('Notification System', () => {
   beforeEach(() => {
-    // Match the approach used in your passing tests
+    
     pool.query.mockReset();
     transporter.sendMail.mockReset();
     broadcast.mockReset();
@@ -24,7 +24,7 @@ describe('Notification System', () => {
 
   it('should send email and broadcast on event creation', async () => {
     pool.query
-      .mockResolvedValueOnce({ // Event creation
+      .mockResolvedValueOnce({
         rows: [{
           id: 1,
           titles: { en: 'New Event', es: '', fr: '' },
@@ -35,10 +35,10 @@ describe('Notification System', () => {
           created_by: 1
         }]
       })
-      .mockResolvedValueOnce({ // notifyUsers location query
+      .mockResolvedValueOnce({ 
         rows: [{ longitude: -73.935242, latitude: 40.730610 }]
       })
-      .mockResolvedValueOnce({ // notifyUsers user query
+      .mockResolvedValueOnce({ 
         rows: [{ id: 3, email: 'j.mutesi@alustudent.com', language: 'en' }]
       });
 
@@ -55,17 +55,17 @@ describe('Notification System', () => {
       .send(eventData)
       .expect(201);
 
-    // Verify email was sent
+    
     expect(transporter.sendMail).toHaveBeenCalled();
     
-    // Check the email format
+    
     const emailCall = transporter.sendMail.mock.calls[0][0];
     expect(emailCall).toMatchObject({
       to: 'j.mutesi@alustudent.com',
       subject: expect.stringContaining('New Event')
     });
 
-    // Verify websocket broadcast happened
+    
     expect(broadcast).toHaveBeenCalledWith({
       type: 'new_event',
       data: expect.objectContaining({ 
@@ -77,7 +77,7 @@ describe('Notification System', () => {
 
   it('should handle empty notification results gracefully', async () => {
     pool.query
-      .mockResolvedValueOnce({ // Event creation
+      .mockResolvedValueOnce({ 
         rows: [{
           id: 1,
           titles: { en: 'New Event', es: '', fr: '' },
@@ -88,10 +88,10 @@ describe('Notification System', () => {
           created_by: 1
         }]
       })
-      .mockResolvedValueOnce({ // notifyUsers location query
+      .mockResolvedValueOnce({ 
         rows: [{ longitude: -73.935242, latitude: 40.730610 }]
       })
-      .mockResolvedValueOnce({ // notifyUsers user query - empty results
+      .mockResolvedValueOnce({ 
         rows: []
       });
 
@@ -108,10 +108,9 @@ describe('Notification System', () => {
       .send(eventData)
       .expect(201);
 
-    // No emails should be sent when no users to notify
+    
     expect(transporter.sendMail).not.toHaveBeenCalled();
     
-    // Broadcast should still happen regardless of notifications
     expect(broadcast).toHaveBeenCalledWith({
       type: 'new_event',
       data: expect.objectContaining({ 

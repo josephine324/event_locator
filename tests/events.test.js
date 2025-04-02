@@ -16,7 +16,7 @@ describe('Events API', () => {
 
   it('should create an event', async () => {
     pool.query
-      .mockResolvedValueOnce({ // Event creation
+      .mockResolvedValueOnce({ 
         rows: [{
           id: 1,
           titles: { en: 'Test Event', es: '', fr: '' },
@@ -27,11 +27,11 @@ describe('Events API', () => {
           created_by: 1
         }]
       })
-      .mockResolvedValueOnce({ // notifyUsers location query
+      .mockResolvedValueOnce({ 
         rows: [{ longitude: -73.935242, latitude: 40.730610 }]
       })
-      .mockResolvedValueOnce({ // notifyUsers user query
-        rows: [] // Empty user list to skip email sending
+      .mockResolvedValueOnce({ 
+        rows: [] 
       });
 
     const eventData = {

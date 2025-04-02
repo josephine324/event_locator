@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.send('Event Locator API is running!');
 });
 
-// Only start server if run directly (not imported)
+
 if (require.main === module) {
   const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);

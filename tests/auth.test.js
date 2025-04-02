@@ -23,7 +23,7 @@ describe('Auth API', () => {
       .expect(200);
 
     expect(res.body.token).toBeDefined();
-    expect(res.body.token).toMatch(/^eyJ/); // JWT starts with "eyJ"
+    expect(res.body.token).toMatch(/^eyJ/); 
   });
 
   it('should reject invalid credentials', async () => {

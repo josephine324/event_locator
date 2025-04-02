@@ -7,7 +7,7 @@ i18next
   .use(Backend)
   .use(middleware.LanguageDetector)
   .init({
-    fallbackLng: 'en', // Default language
+    fallbackLng: 'en',
     backend: {
       loadPath: './locales/{{lng}}/translation.json'
     },
