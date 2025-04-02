@@ -14,7 +14,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Create the user using the User model
+    // Create the user using the User model`
     const user = await User.create({ // Use User (capitalized)
       username,
       password,
@@ -49,6 +49,12 @@ router.post('/login', async (req, res) => {
     console.error(err.stack);
     res.status(500).send('Server error');
   }
+});
+router.get('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    res.json({ message: 'Logged out' });
+  });
 });
 
 module.exports = router;
