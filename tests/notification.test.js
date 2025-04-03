@@ -4,7 +4,7 @@ const pool = require('../config/db');
 const transporter = require('../config/email');
 const { broadcast } = require('../websocket');
 
-// Keep these mocks
+
 jest.mock('../config/email', () => ({
   sendMail: jest.fn().mockResolvedValue({})
 }));

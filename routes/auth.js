@@ -3,27 +3,27 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
-const User = require('../models/user'); // Import the User model (capitalized)
+const User = require('../models/user'); 
 
 router.post('/register', async (req, res) => {
   const { username, password, location, preferences, language } = req.body;
   try {
-    // Check if username already exists
-    const existingUser = await User.findByUsername(username); // Use User (capitalized)
+    
+    const existingUser = await User.findByUsername(username); 
     if (existingUser) {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Create the user using the User model`
-    const user = await User.create({ // Use User (capitalized)
+    
+    const user = await User.create({ 
       username,
       password,
-      location: location || { latitude: 0, longitude: 0 }, // Default location
+      location: location || { latitude: 0, longitude: 0 }, 
       preferences: preferences || {},
       language: language || 'en'
     });
 
-    // Generate JWT token (matching login behavior)
+    
     const token = jwt.sign({ id: user.id }, 'your-jwt-secret', { expiresIn: '1h' });
     console.log('Generated token:', token);
 
